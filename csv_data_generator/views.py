@@ -6,15 +6,26 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import generic
 
-from csv_data_generator.models import Schema, SchemaColumn, SchemaDataSetCSV, TYPE_OF_COLUMN
+from csv_data_generator.models import Schema, SchemaColumn, SchemaDataSetCSV
+from csv_data_generator.tasks import task_csv_generator
 
 
 class IndexSchemaView(LoginRequiredMixin, generic.ListView):
+    """
+    Show schemas created by current user
+    """
     template_name = 'index.html'
     model = Schema
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(user=self.request.user)
+
 
 class NewSchemaView(generic.View):
+    """
+    In this view, we create new schema with dynamic fields(columns)
+    """
     template_name = 'newschema.html'
     success_url = 'index-schema'
 
@@ -30,9 +41,8 @@ class NewSchemaView(generic.View):
         self.create_columns_to_schema(schema, columns_name, types, orders)
         return redirect(reverse_lazy(self.success_url))
 
-    @staticmethod
-    def create_schema(name_of_schemas: str = None) -> Schema:
-        schema = Schema.objects.create(name=name_of_schemas)
+    def create_schema(self, name_of_schemas: str = None) -> Schema:
+        schema = Schema.objects.create(name=name_of_schemas, user=self.request.user)
         return schema
 
     @staticmethod
@@ -52,34 +62,45 @@ class NewSchemaView(generic.View):
 
 
 class SchemaDetailView(generic.DetailView):
+    """
+    View for detail schema
+    """
     model = Schema
     template_name = 'schema_detail.html'
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(user=self.request.user)
+
 
 class SchemaUpdateAndGenerateCsvView(generic.View):
+    """
+    View for Generate Csv
+    """
     template_name = 'schema_update.html'
     queryset = SchemaDataSetCSV.objects.all()
     success_url = 'schema-update'
 
     def get(self, request, *args, **kwargs):
         schema = Schema.objects.filter(pk=kwargs['pk']).first()
-        context = {'object_list': self.queryset, 'schema': schema}
+        queryset = self.queryset.filter(schema__user=self.request.user, schema=schema)
+        context = {'object_list': queryset, 'schema': schema}
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         count_rows = request.POST['rows']
-        self.generate_csv_with_fake_data(count_rows, kwargs['pk'])
+        dataset = self.create_dataset_csv()
+        task_csv_generator.delay(duration=10, count_rows=count_rows, pk=kwargs['pk'], dataset_id=dataset.id)
         return redirect(reverse_lazy(self.success_url, kwargs={'pk': kwargs['pk']}))
 
-    @staticmethod
-    def create_dataset_csv(pk):
-        schema = Schema.objects.filter(pk=pk).first()
+    def create_dataset_csv(self):
+        schema = Schema.objects.filter(pk=self.kwargs['pk']).first()
         csv_object = SchemaDataSetCSV.objects.create(schema=schema, status='pending')
         return csv_object
 
     @staticmethod
-    def generate_csv_with_fake_data(count_rows: int = None, pk: int = None) -> bool:
-        csv_object = SchemaUpdateAndGenerateCsvView.create_dataset_csv(pk)
+    def generate_csv_with_fake_data(count_rows: int = None, pk: int = None, dataset: SchemaDataSetCSV = None) -> bool:
+        csv_object = dataset
         fields = []
         name_of_csv = SchemaUpdateAndGenerateCsvView.generate_name_to_csv()
         schema = Schema.objects.filter(id=pk).first()
