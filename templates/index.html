@@ -2,6 +2,37 @@
 
 {% block content %}
 {%  include 'navbar.html' %}
+<div class="container">
+    <div class="row">
+    <table class="table">
+    <div class="col-md-4" style="margin-top: 20px;">
 
-
+        <h2 style="margin-top: 30px; margin-bottom: 30px">Data schemas</h2>
+    </div>
+    <div class="col-md-4" style="margin-top: 20px;">
+        <a href="{% url 'newschema' %}">
+            <button class="btn btn-success float-right" style="margin-top: 20px;">New Schema</button>
+        </a>
+    </div>
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Title</th>
+      <th scope="col">Modified</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for schema in object_list %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td><a href="{% url 'schema-detail' schema.id %}">{{ schema.name }}</a></td>
+      <td>{{schema.updated_at}}</td>
+      <td> <button>Edit Scheme</button> <button>Delete</button></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+    </div>
+</div>
 {% endblock content %}
