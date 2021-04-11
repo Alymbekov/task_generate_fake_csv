@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% include 'navbar.html' %}
+
+    <div class="container">
+    <div class="row">
+    <table class="table">
+    <div class="col-md-4" style="margin-top: 20px;">
+
+        <h2 style="margin-top: 30px; margin-bottom: 30px">Data Sets</h2>
+    </div>
+    <div class="col-md-5" style="margin-top: 20px;">
+        <form action="{% url 'schema-update' schema.id %}" method="post">
+            {% csrf_token %}
+            <label for="rows"> Rows: </label>
+            <input id="rows" type="number" required name="rows" style="margin-top: 20px; margin-left: 50px">
+            <button type="submit" class="btn btn-success float-right" style="margin-top: 20px;">Generate</button>
+        </form>
+    </div>
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Created</th>
+      <th scope="col">Status</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dataset in object_list %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{ dataset.created_at }}</td>
+      <td>{{dataset.status}}</td>
+      <td>
+          <a href="{{ dataset.link.url }}" download>
+              Download
+          </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+    </div>
+</div>
+
+{% endblock content %}
+
