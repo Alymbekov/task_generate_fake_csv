@@ -34,9 +34,13 @@
       <td>{{ dataset.created_at }}</td>
       <td>{{dataset.status}}</td>
       <td>
+          {% if dataset.link %}
           <a href="{{ dataset.link.url }}" download>
               Download
           </a>
+          {% else %}
+
+          {% endif %}
       </td>
     </tr>
     {% endfor %}
