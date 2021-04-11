@@ -46,7 +46,7 @@ class SchemaDataSetCSV(DataABS):
         ('pending', 'Pending'),
     )
     status = models.CharField(choices=STATUS, blank=True, max_length=50)
-    link = models.FileField(upload_to='datasets/')
+    link = models.FileField(upload_to='datasets/', default=None, null=True)
     schema = models.ForeignKey(Schema, on_delete=models.CASCADE, related_name='data_sets_csv')
 
     def __str__(self):

@@ -72,19 +72,27 @@ class SchemaUpdateAndGenerateCsvView(generic.View):
         return redirect(reverse_lazy(self.success_url, kwargs={'pk': kwargs['pk']}))
 
     @staticmethod
+    def create_dataset_csv(pk):
+        schema = Schema.objects.filter(pk=pk).first()
+        csv_object = SchemaDataSetCSV.objects.create(schema=schema, status='pending')
+        return csv_object
+
+    @staticmethod
     def generate_csv_with_fake_data(count_rows: int = None, pk: int = None) -> bool:
+        csv_object = SchemaUpdateAndGenerateCsvView.create_dataset_csv(pk)
         fields = []
-        name = SchemaUpdateAndGenerateCsvView.generate_name_to_csv()
+        name_of_csv = SchemaUpdateAndGenerateCsvView.generate_name_to_csv()
         schema = Schema.objects.filter(id=pk).first()
         for column in schema.columns.all():
             fields.append({
                 'column_name': column.column_name + '0',
                 'type_of_column': column.type_of_column + '1',
-                'order': str(column.order) + '2'
             })
         fields_name = [i for x in fields for i in x.values()]
         dict_ = {}
-        with open(f'{name}', 'w', newline='') as csvfile:
+
+        """create csv file with random data, use DictWriter"""
+        with open(f'{name_of_csv}', 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fields_name)
 
             writer.writeheader()
@@ -92,29 +100,34 @@ class SchemaUpdateAndGenerateCsvView(generic.View):
                 for index, name in enumerate(fields_name):
                     column_name = None
                     type_of_column = None
-                    order = None
                     if name[-1] == '0':
-                        column_name = name
-                    if name[-1] == '1':
-                        type_of_column = type_of_column
-                    if name[-1] == '2':
-                        order = order
-                    dict_.update({
-                        column_name: SchemaUpdateAndGenerateCsvView.get_random_column_name_value(),
-                        type_of_column: type_of_column,
-                        order: index
-                    })
-            print(dict_)
+                        try:
+                            column_name = name
+                            type_of_column = fields_name[index + 1]
+                        except IndexError:
+                            type_of_column = fields_name[-1]
+                    if column_name and type_of_column:
+                        value = SchemaUpdateAndGenerateCsvView.get_random_column_name_value()
+                        dict_.update({
+                            column_name: value,
+                            type_of_column: type_of_column,
+                        })
+                writer.writerow(dict_)
+            csv_object.status = 'ready'
+            csv_object.link = name_of_csv
+            csv_object.save()
+        if csv_object.status == 'ready':
             return True
+        else:
+            return False
 
     @staticmethod
-    def generate_name_to_csv():
+    def generate_name_to_csv() -> str:
         random_number = random.randint(100000, 9999999999)
         random_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-        full_file_name = f'{random_string}{random_number}.csv'
+        full_file_name = f'datasets/{random_string}{random_number}.csv'
         return full_file_name
 
     @staticmethod
-    def get_random_column_name_value():
+    def get_random_column_name_value() -> str:
         return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10))
-
