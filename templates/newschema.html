@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block script %}
+<script>
+function appendText() {
+    let columnName = $(`
+        <div class="form-group col-md-4">
+            <label for="columnName">Column name: </label>
+            <input type="text" class="form-control" id="columnName" name='columnName'>
+        </div>`);
+    let type = $(`
+        <div class="form-group col-md-3">
+            <label for="type"> Type: </label>
+            <select size="1" id="type" class="form-control" name="choices[]">
+                <option selected value="Full name">Full name</option>
+                <option value="Integer">Integer</option>
+                <option value="Company">Company</option>
+                <option value="Job">Job</option>
+            </select>
+        </div>
+    `);
+
+    let order = $(`
+        <div class="form-group col-md-2">
+            <label for="order">Order</label>
+            <input type="number" class="form-control" value="0" id="order" name="order">
+        </div>
+    `);
+    $("div.columns-csv").append(columnName, type, order);
+}
+</script>
+{% endblock script %}
+{% block content %}
+    {%  include 'navbar.html' %}
+
+    <form action="" method="post">
+        <div class="container">
+        <div class="form-row">
+            {% csrf_token %}
+            <div class="form-group col-md-4">
+                <label for="inputName"> Name: </label>
+                <input type="text" class="form-control"  id="inputName" name="name_of_schemas">
+            </div>
+            <div class="col-md-6" style="margin-top: 20px;">
+                <input type="submit" class="btn btn-primary float-right"  value="submit">
+            </div>
+        </div>
+        <h4>Schemas Columns</h4>
+        <div class="form-row columns-csv">
+            <div class="form-group col-md-4">
+                <label for="columnName">Column name: </label>
+                <input type="text" class="form-control" id="columnName" name='columnName'>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="type"> Type: </label>
+                <select size="1" id="type" class="form-control" name="choices[]">
+                    <option selected value="Full name">Full name</option>
+                    <option value="Integer">Integer</option>
+                    <option value="Company">Company</option>
+                    <option value="Job">Job</option>
+                </select>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="order">Order</label>
+                <input type="number" class="form-control" value="0" id="order" name="order">
+            </div>
+
+        </div>
+    </div>
+
+    </form>
+    <div class="container">
+    <button onclick="appendText()" class="btn btn-primary">Add Column</button>
+    </div>
+
+{% endblock content %}
