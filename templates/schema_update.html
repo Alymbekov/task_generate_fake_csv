@@ -1,6 +1,15 @@
 {% extends 'base.html' %}
 
+{% block script %}
+<script>
+(function worker() {
+    setTimeout(()=> {
+        window.location.reload()
+    }, 10000)
+})();
 
+</script>
+{% endblock script %}
 {% block content %}
 {% include 'navbar.html' %}
 
